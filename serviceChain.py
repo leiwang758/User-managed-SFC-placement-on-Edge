@@ -9,6 +9,15 @@ from itertools import permutations
 from gurobipy import *
 import scipy.stats
 import ast
+# from pygraphviz import *
+
+
+plt.rc('xtick',labelsize=10)
+plt.rc('ytick',labelsize=10)
+plt.rc('legend', fontsize=10)
+plt.rc('savefig', bbox = "tight")
+plt.rc('hatch', color = "slategrey")
+algorithmName = "CHANGE"
 
 service_num = 3
 cloud = (100, 100)
@@ -660,6 +669,102 @@ def getCapacitylist2(G):
     for i, (n, d) in enumerate(G.nodes(data = True)):
         c[i] = 1.0/d['estimate']
     return c
+def drawNetworkTopology(n):
+    labelsn = {}
+    labelse = {}
+    nodel = []
+    edgel = []
+    # #create a star topology
+    G = nx.grid_2d_graph(n, n)
+    for (u, d) in G.nodes(data=True):
+        d["weight"] = 1
+        labelsn[u] = d["weight"]
+        d['estimate'] = 0
+        d['time'] = 0
+
+    for (u, v, d) in G.edges(data=True):
+        d['weight'] = 1
+        labelse[(u, v)] = d["weight"]
+        d['estimate'] = 0
+        d['time'] = 0
+        edgel.append((u, v))
+
+    G.add_node("Cloud", weight=10, time=0, estimate=0)
+    for n in G.nodes:
+        if n != "Cloud":
+            G.add_edge(n, "Cloud")
+    for (u, v, d) in G.edges(data=True):
+        if v == "cloud":
+            d['weight'] = 100
+            d['estimate'] = 0
+            d['time'] = 0
+
+    labels = {}
+    for i, n in enumerate(G):
+        labels[n] = "%i" % (i + 1)
+    labels["Cloud"] = "Cloud"
+    #labels[0] = "vSwitch"
+    posS = nx.spring_layout(G, )
+    nx.draw(G, posS, labels=labels, with_labels=True)
+    nx.draw_networkx_nodes(G, posS, nodelist=["Cloud"], node_color='skyblue', node_size=2000)
+    plt.savefig("../UofCthesis/figs/topology.eps", format = "eps")
+    plt.show()
+    #create a star topology
+    # cloudedge = []
+    # gridedge = []
+    # G = nx.grid_2d_graph(n, n)
+    # G.add_node("cloud")
+    #
+    # for n in G.nodes:
+    #     if n != "cloud":
+    #         G.add_edge(n, "cloud")
+    # for (u, v, d) in G.edges(data=True):
+    #     if v == cloud:
+    #         cloudedge.append((u, v))
+    #         d['length'] = 100
+    #     else:
+    #         d['length'] = 1
+    #         gridedge.append((u, v))
+    #
+    #
+    # pos = nx.spring_layout(G, weight="length")
+    # nx.draw_spring(G)
+    # nx.draw_networkx_edges(G, pos,
+    #                        edgelist=cloudedge,
+    #                        width=1, alpha=0.5, edge_color='r', style='--')
+    # nx.draw_networkx_edges(G, pos,
+    #                        edgelist=gridedge,
+    #                        width=1, alpha=0.5, edge_color='b')
+    # nx.draw_networkx_nodes(G, pos, nodelist=[cloud], node_color='r', label="Cloud")
+    # nx.draw_networkx_nodes(G, pos, nodelist=list(G.nodes), node_color='g')
+    #nx.draw_networkx_nodes(G, pos, nodelist=list(G.nodes), node_color='g')
+    #nx.draw_networkx_edges(G, pos, edgelist=list(G.edges))
+    #nx.draw_networkx_labels(G, pos)
+    #nx.draw_networkx_edge_labels(G, pos)
+    # plt.show()
+    # labels = {}
+    # labels[cloud] = r'$cloud$'
+    # # for e in edge:
+    # #     labels[e] = r'$e$'
+    #
+    # cloudedge = []
+    # gridedge = []
+    # for (u, v) in G.edges:
+    #     if v == cloud:
+    #         cloudedge.append((u, v))
+    #     else:
+    #         gridedge.append((u, v))
+    # nx.draw_networkx_edges(G, pos,
+    #                        edgelist=cloudedge,
+    #                        width=10, alpha=0.5, edge_color='r')
+    # nx.draw_networkx_edges(G, pos,
+    #                        edgelist=gridedge,
+    #                        width=1, alpha=0.5, edge_color='b')
+    # nx.draw_networkx_labels(G, pos, labels, font_size=16)
+    #plt.savefig("network.eps", format='eps')
+    plt.show()
+    # estimate Arms and print the inital network data
+
 def createNetwork(n, transLevel, compLevel):
     labelsn = {}
     labelse = {}
@@ -697,38 +802,38 @@ def createNetwork(n, transLevel, compLevel):
 
     # create a grid network
     G = nx.grid_2d_graph(n, n)
-    for (u, d) in G.nodes(data=True):
-        if compLevel == 0:
-            d['weight'] = round(random.uniform(0.2, 0.3), 5)
-        elif compLevel == 1:
-            d['weight'] = round(random.uniform(0.3, 0.4), 5)
-        elif compLevel == 2:
-            d['weight'] = round(random.uniform(0.4, 0.5), 5)
-        elif compLevel == 3:
-            d['weight'] = round(random.uniform(0.5, 0.6), 5)
-        elif compLevel == 4:
-            d['weight'] = round(random.uniform(0.6, 0.7), 5)
-        #d['weight'] = round(random.uniform(1, 1.5), 5)
-        #labelsn[u] = d["weight"]
-        d['estimate'] = 0
-        d['time'] = 0
-        nodel.append(u)
-        # print(u, d["weight"], 1.0/d["weight"])
-    for (u, v, d) in G.edges(data=True):
-        if transLevel == 0:
-            d['weight'] = round(random.uniform(1, 2), 5)
-        elif transLevel == 1:
-            d['weight'] = round(random.uniform(2, 3), 5)
-        elif transLevel == 2:
-            d['weight'] = round(random.uniform(3, 4), 5)
-        elif transLevel == 3:
-            d['weight'] = round(random.uniform(4, 5), 5)
-        elif transLevel == 4:
-            d['weight'] = round(random.uniform(5, 6), 5)
-        labelse[(u, v)] = d["weight"]
-        d['estimate'] = 0
-        d['time'] = 0
-        edgel.append((u, v))
+    # for (u, d) in G.nodes(data=True):
+    #     if compLevel == 0:
+    #         d['weight'] = round(random.uniform(0.2, 0.3), 5)
+    #     elif compLevel == 1:
+    #         d['weight'] = round(random.uniform(0.3, 0.4), 5)
+    #     elif compLevel == 2:
+    #         d['weight'] = round(random.uniform(0.4, 0.5), 5)
+    #     elif compLevel == 3:
+    #         d['weight'] = round(random.uniform(0.5, 0.6), 5)
+    #     elif compLevel == 4:
+    #         d['weight'] = round(random.uniform(0.6, 0.7), 5)
+    #     #d['weight'] = round(random.uniform(1, 1.5), 5)
+    #     #labelsn[u] = d["weight"]
+    #     d['estimate'] = 0
+    #     d['time'] = 0
+    #     nodel.append(u)
+    #     # print(u, d["weight"], 1.0/d["weight"])
+    # for (u, v, d) in G.edges(data=True):
+    #     if transLevel == 0:
+    #         d['weight'] = round(random.uniform(1, 2), 5)
+    #     elif transLevel == 1:
+    #         d['weight'] = round(random.uniform(2, 3), 5)
+    #     elif transLevel == 2:
+    #         d['weight'] = round(random.uniform(3, 4), 5)
+    #     elif transLevel == 3:
+    #         d['weight'] = round(random.uniform(4, 5), 5)
+    #     elif transLevel == 4:
+    #         d['weight'] = round(random.uniform(5, 6), 5)
+    #     labelse[(u, v)] = d["weight"]
+    #     d['estimate'] = 0
+    #     d['time'] = 0
+    #     edgel.append((u, v))
 
     # add cloud
     G.add_node(cloud, weight=0.1, time=0, estimate=0)
@@ -1333,95 +1438,48 @@ def replot():
     plt.ylim(bottom=0)
     plt.grid(linestyle='--', zorder=0)
     plt.legend()
-    plt.savefig("replotlearningnormalized.eps", format="eps")
+    plt.savefig("../figs/replotlearningnormalized.eps", format="eps")
     plt.savefig("replotlearningnormalized.png", format="png")
     plt.show()
-def replot2y():
-    fig, ax1 = plt.subplots()
-    ax1.set_xlabel("Learning slots")
-    ax1.set_ylabel("Time average cost")
-    AvgRegret = ast.literal_eval(open("avgregretc0.300000i10000", 'r').readline())
-    Cost = ast.literal_eval(open("cmab1c0.300000i10000", 'r').readline())
-    Offline = ast.literal_eval(open('offline', 'r').readline())
-    x = [i for i in range(len(Cost))]
-    avgc = [sum(Cost[0:i + 1]) / len(Cost[0:i + 1]) for i in range(len(Cost))]
-    navgc = [a/(max(avgc)-Offline) for a in avgc]
-    avgo = [Offline/(max(avgc)-Offline) for i in x]
-    l1, = ax1.plot(x[0:4000], navgc[0:4000], '--', label='BandEdge', zorder=3)
-    l2, = ax1.plot(x[0:4000], avgo[0:4000], label='Offline optimum', zorder=3)
-    # plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    ax2 = ax1.twinx()
-    ax2.set_ylabel("regret")
-    l3, = ax2.plot(x[0:4000], AvgRegret[0:4000], ':', label="regret", zorder=3)
-    fig.tight_layout()
-    ax1.grid(linestyle='--', zorder=0)
-    #ax2.grid(linestyle='--', zorder=0)
-    plt.ylim(bottom=0)
-    plt.legend([l1, l2, l3], ["BandEdge", "Offline optimum", "Regret"], loc='right')
-    plt.savefig("replotlearningnormalized1.eps", format="eps")
-    plt.savefig("replotlearningnormalized1.png", format="png")
-    plt.show()
-def replotRuntime():
+def replotRuntime(fs):
     Marker = ["o", "v", "^", "x"]
     for n in [3, 4, 5, 6]:
         RT = ast.literal_eval(open("runtimeN%i"%n, 'r').readline())
         plt.plot([i+3 for i in range(len(RT))], RT, label="%i nodes"%(n*n), marker=Marker[n-3], zorder=3)
-    plt.xlabel("Number of Services")
-    plt.ylabel("Running Time (s)")
+    plt.xlabel("Number of Services", fontsize=fs)
+    plt.ylabel("Running Time (ms)", fontsize=fs)
     plt.grid(linestyle='--', zorder=0)
     plt.legend()
-    plt.savefig("../paper/figs/replotruntime.eps", format="eps")
+    plt.savefig("../icfec21/figs/replotruntime.eps", format="eps")
     plt.savefig("replotruntime.png", format="png")
     plt.show()
+def heuristic(G, context, i, threshhold):
+    placement = oracle_edge(G, context, i)
+    c1, _, _, _ = scCost(placement, G, context)
+    c2, _, _, _ = scCost([cloud for i in range(service_num)], G, context)
+    # if c1 > c2:
+    #     placement = [cloud for i in range(service_num)]
+    if c1 > threshhold:
+        placement = [cloud for i in range(service_num)]
+    print(placement)
+    return placement
+def bound(n, G, s):
+    m = len(list(G.nodes))
+    a = sqrt(m-1)
+    context = contextData()
+    context.update(pos=random.choice(list(G.nodes)), demand=[random.choice([2.5, 25, 100]) for i in range(service_num)],
+                   lastplace=random.sample(list(G.nodes), service_num))
+    S = permutations(list(G.nodes), s)
 
+    SC = [scCost(s, G, context)[0] for s in S]
+    SC.sort()
+    min = SC[1]-SC[0]
+    max = SC[-1]-SC[0]
+    maxLength = 4.0*a + s*1.0
+    print(min, maxLength, max, s, a, m ,n)
+    return (6*log(n)/(min/maxLength)**2 + pi**2/3 + 1)*m*max/n
 def avgList(list):
     return [sum(list[0:i + 1]) / len(list[0:i + 1]) for i in range(len(list))]
-def replotMiniWifiLearning():
-    # Cost1 = [float(r) for r in open("gCostg.txt", 'r').readlines()]
-    # Cost2 = [float(r) for r in open("Cost1000.txt", 'r').readlines()]
-    #gCost = [float(r) for r in open("gCost1000.txt", 'r').readlines()]
-    Cost = [float(r) for r in open("Costg3 - Copy.txt", 'r').readlines()]
-    #Cost5 = [float(r) for r in open("tCost1000.txt", 'r').readlines()]
-    gCost =  [float(r) for r in open("gCostg.txt", 'r').readlines()]
-    # gCost2 = [float(r) for r in open("gCost1000.txt", 'r').readlines()]
-    # gCost3 = [float(r) for r in open("gCost1000.txt", 'r').readlines()]
-    # gCost4 = [float(r) for r in open("tCost1000.txt", 'r').readlines()]
-
-
-
-
-
-    # gCost = [gCost1, gCost2, gCost3, gCost4]
-
-
-    Marker = ["o", "v", "^", "<", ">", "+", "x", "|", "_"]
-    Y1 = []
-    Y2 = []
-    X = [1, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-    AvgCost = []
-    AvggCost = []
-    for n in X:
-        AvgCost.append(avgList(Cost)[n-1])
-        AvggCost.append(avgList(gCost)[n-1])
-    # for c in gCost:
-    #     AvggCost = []
-    #     for n in X:
-    #         AvggCost.append(avgList(c)[n-1])
-    #     Y2.append(AvggCost)
-
-
-    plt.plot(X, AvgCost, label="BandEdge", marker=random.choice(Marker), zorder=3)
-    plt.plot(X, AvggCost, label="$\epsilon$-greedy", marker=random.choice(Marker), zorder=3)
-    plt.plot(X, [float(open("offline100_1.txt").read()) for i in range(len(X))], label="offline optimum", zorder=3)
-    plt.xlabel("Learning slots")
-    plt.ylabel("Average response time")
-    plt.ylim(bottom=0)
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend()
-    plt.savefig("MiniwifiLearning1.eps", format="eps")
-    plt.savefig("MiniwifiLearning1.png", format="png")
-    plt.show()
-
 def replotregret():
     AvgRegret = ast.literal_eval(open("avgregretc0.300000i10000", 'r').readline())
     #Offline = ast.literal_eval(open('offline', 'r').readline())
@@ -1542,564 +1600,6 @@ def plotExploreratio(G, iters):
     # plt.legend()
     # plt.savefig("learnin9.eps", format="eps")
     # plt.show()
-def plotServiceNumRuntime(i, s, n):
-
-    Run1 = []
-    Run2 = []
-    for sn in range(3, s+1):
-        G = createNetwork(5, transLevel=0, compLevel=0)
-        global service_num
-        service_num = sn
-        #run1, run2, __, __ = main1(G, i, 5)
-        run1 = mainLearning(G, i)
-        Run1.append(run1)
-
-    for sn in range(3, s+1):
-        G = createNetwork(sn, transLevel=0, compLevel=0)
-        service_num = 3
-        run2 = mainLearning(G, i)
-        Run2.append(run2)
-    x = [i for i in range(3, s+1)]
-    plt.plot(x, Run1, label='service', marker='o')
-    plt.plot(x, Run2, label='node size', marker='v')
-    plt.xlabel("# of services/node size")
-    plt.xticks(x, x)
-    plt.ylabel("Runtime (s)")
-    plt.ylim(bottom=0)
-    plt.legend()
-    plt.savefig("runtime2.eps", format="eps")
-    plt.show()
-def plotTransWeight(n):
-    CMAB = []
-    Cloud = []
-    Edge = []
-    # Offline = []
-    # heuristic = []
-    # for i in range(5):
-    #     G = createNetwork(5, i, 3)
-    #     cmab, cloud, edge, offline = main2(G, n, None)
-    #     CMAB.append(cmab)
-    #     Cloud.append(cloud)
-    #     Edge.append(edge)
-    #     Offline.append(offline)
-    # open("cmabtw", 'w').write(str(CMAB))
-    # open("sctw", 'w').write(str(Cloud))
-    # open("setw", 'w').write(str(Edge))
-    CMAB = ast.literal_eval(open("cmabtw", 'r').readline())
-    Cloud = ast.literal_eval(open("sctw", 'r').readline())
-    Edge = ast.literal_eval(open("setw", 'r').readline())
-    Y = CMAB + Cloud + Edge
-    N = (max(Y)+min(Y))/2.0
-    CMAB = [y / N for y in CMAB]
-    Cloud = [y / N for y in Cloud]
-    Edge = [y / N for y in Edge]
-    ILP = [1.0 for i in range(5)]
-    labels = [1,2,3,4,5]
-    x = np.arange(len(labels))
-    width = 0.3
-    plt.bar(x - 3 * width / 2, CMAB, width, label='BandEdge', hatch='//', color='#4DBEEE', zorder=3)
-    plt.bar(x - width / 2, Cloud, width, label='SC', hatch='..', color='#A2142F', zorder=3)
-    plt.bar(x + width / 2, Edge, width, label='SE', hatch='++', color='#EDB120', zorder=3)
-    plt.grid(linestyle='--', zorder=0)
-    plt.ylabel('Performance ratio', fontsize=15)
-    plt.xlabel('Transmission delay levels on edge', fontsize = 15)
-    plt.xticks(x, labels)
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("../paper/figs/transmissionLevel2.eps", format='eps')
-    plt.show()
-def plotComputingWeight(n):
-    CMAB = []
-    Cloud = []
-    Edge = []
-    # Offline = []
-    # heuristic = []
-    # for i in range(5):
-    #     G = createNetwork(5, 3, i)
-    #     cmab, cloud, edge, offline = main2(G, n, None)
-    #     CMAB.append(cmab)
-    #     Cloud.append(cloud)
-    #     Edge.append(edge)
-    #     Offline.append(offline)
-    # open("cmabcw", 'w').write(str(CMAB))
-    # open("sccw", 'w').write(str(Cloud))
-    # open("secw", 'w').write(str(Edge))
-    CMAB = ast.literal_eval(open("cmabcw", 'r').readline())
-    Cloud = ast.literal_eval(open("sccw", 'r').readline())
-    Edge = ast.literal_eval(open("secw", 'r').readline())
-    # CMAB = [Cost1[i] / Cost2[i] for i in range(5)]
-    # Cloud = [Cost3[i] / Cost2[i] for i in range(5)]
-    # Edge = [Cost4[i] / Cost2[i] for i in range(5)]
-    # ILP = [1.0 for i in range(5)]
-    Y = CMAB + Cloud + Edge
-    N = (max(Y)+min(Y))/2.0
-    CMAB = [y / N for y in CMAB]
-    Cloud = [y / N for y in Cloud]
-    Edge = [y / N for y in Edge]
-    labels = [1, 2, 3, 4, 5]
-    x = np.arange(len(labels))
-    width = 0.3
-    plt.bar(x - 3 * width / 2, CMAB, width, label='BandEdge', hatch='//', color='#4DBEEE', zorder=3)
-    plt.bar(x - width / 2, Cloud, width, label='SC', hatch='..', color='#A2142F', zorder=3)
-    plt.bar(x + width / 2, Edge, width, label='SE', hatch='++', color='#EDB120', zorder=3)
-    plt.grid(linestyle='--', zorder=0)
-    plt.ylabel('Performance ratio', fontsize=15)
-    plt.xlabel('Computing delay levels on edge', fontsize=15)
-    plt.xticks(x, labels)
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("../paper/figs/computationLevel2.eps", format='eps')
-    plt.show()
-    #plt.close()
-def plotLearningSlot(n, t, c, th):
-    CMAB = []
-    Cloud = []
-    Edge = []
-    Offline = []
-    heuristic = []
-    for i in range(100, 501, 100):
-        G = createNetwork(n, t, c)
-        cmab, cloud, edge, offline = main2(G, i, None)
-        CMAB.append(cmab)
-        Cloud.append(cloud)
-        Edge.append(edge)
-        Offline.append(offline)
-    open("cmabls", 'w').write(str(CMAB))
-    open("scls", 'w').write(str(Cloud))
-    open("sels", 'w').write(str(Edge))
-    # CMAB = ast.literal_eval(open("cmabls", 'r').readline())
-    # Cloud = ast.literal_eval(open("scls", 'r').readline())
-    # Edge = ast.literal_eval(open("sels", 'r').readline())
-    Y = CMAB + Cloud + Edge
-    N = (max(Y)+min(Y))/2.0
-    CMAB = [y/N for y in CMAB]
-    Cloud = [y/N for y in Cloud]
-    Edge = [y/N for y in Edge]
-    labels = [100, 200, 300, 400, 500]
-    x = np.arange(len(labels))
-    width = 0.3
-    plt.bar(x - 3 * width / 2, CMAB, width, label='BandEdge', hatch='//', color='#4DBEEE',zorder=3)
-    plt.bar(x - width / 2, Cloud, width, label='SC', hatch='..', color='#A2142F', zorder=3)
-    plt.bar(x + width / 2, Edge, width, label='SE', hatch='++', color='#EDB120', zorder=3)
-    plt.grid(linestyle='--', zorder=0)
-    plt.ylabel('Performance ratio')
-    plt.xlabel("Learning slots")
-    plt.xticks(x, labels)
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("learningslot2.eps", format="eps")
-    plt.show()
-def plotSwitchCost(i):
-    CMAB = []
-    Cloud = []
-    Edge = []
-    Offline = []
-    heuristic = []
-    # for sw in labels:
-    #     global switch_weight
-    #     switch_weight = sw
-    #     G = createNetwork(5, 3, 3)
-    #     cmab, cloud, edge, offline = main2(G, i, 80)
-    #     CMAB.append(cmab)
-    #     Cloud.append(cloud)
-    #     Edge.append(edge)
-    #     Offline.append(offline)
-    # open("cmabsw", 'w').write(str(CMAB))
-    # open("scsw", 'w').write(str(Cloud))
-    # open("sesw", 'w').write(str(Edge))
-    CMAB = ast.literal_eval(open("cmabsw", 'r').readline())
-    Cloud = ast.literal_eval(open("scsw", 'r').readline())
-    Edge = ast.literal_eval(open("sesw", 'r').readline())
-    Y = CMAB + Cloud + Edge
-    N = (max(Y)+min(Y))/2.0
-    CMAB = [y / N for y in CMAB]
-    Cloud = [y / N for y in Cloud]
-    Edge = [y / N for y in Edge]
-    labels = [1.0, 2.0, 3.0, 4.0, 5.0]
-    # CMAB = [Cost1[i] / Cost2[i] for i in range(5)]
-    # Cloud = [Cost3[i] / Cost2[i] for i in range(5)]
-    # Edge = [Cost4[i] / Cost2[i] for i in range(5)]
-    # CMAB = Cost1
-    # Cloud = Cost2
-    # Edge = Cost4
-    # ILP = [1.0 for i in range(5)]
-    x = np.arange(len(labels))
-    width = 0.3
-    plt.bar(x - 3 * width / 2, CMAB, width, label='BandEdge', hatch='//', color='#4DBEEE', zorder=3)
-    plt.bar(x - width / 2, Cloud, width, label='SC', hatch='..', color='#A2142F', zorder=3)
-    plt.bar(x + width / 2, Edge, width, label='SE', hatch='++', color='#EDB120', zorder=3)
-    #plt.bar(x + 3 * width / 2, heuristic, width, label='Heuristic', hatch='+')
-    plt.ylabel('Performance ratio',fontsize=15) #,fontsize=15
-    plt.xlabel("The weight of switching cost",fontsize=15)
-    plt.xticks(x, labels)
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("../paper/figs/switchingcost2.eps", format="eps")
-    plt.show()
-def bound(n, G, s):
-    m = len(list(G.nodes))
-    a = sqrt(m-1)
-    context = contextData()
-    context.update(pos=random.choice(list(G.nodes)), demand=[random.choice([2.5, 25, 100]) for i in range(service_num)],
-                   lastplace=random.sample(list(G.nodes), service_num))
-    S = permutations(list(G.nodes), s)
-
-    SC = [scCost(s, G, context)[0] for s in S]
-    SC.sort()
-    min = SC[1]-SC[0]
-    max = SC[-1]-SC[0]
-    maxLength = 4.0*a + s*1.0
-    print(min, maxLength, max, s, a, m ,n)
-    return (6*log(n)/(min/maxLength)**2 + pi**2/3 + 1)*m*max/n
-def heuristic(G, context, i, threshhold):
-    placement = oracle_edge(G, context, i)
-    c1, _, _, _ = scCost(placement, G, context)
-    c2, _, _, _ = scCost([cloud for i in range(service_num)], G, context)
-    # if c1 > c2:
-    #     placement = [cloud for i in range(service_num)]
-    if c1 > threshhold:
-        placement = [cloud for i in range(service_num)]
-    print(placement)
-    return placement
-def mobilitybar():
-    RWCost = [float(r) for r in open("Costrw.txt", 'r').readlines()]
-    RWeg = [float(r) for r in open("egCostrw.txt", 'r').readlines()]
-    RWdyg = [float(r) for r in open("dygCostrw.txt", 'r').readlines()]
-    RDCost = [float(r) for r in open("Costrd.txt", 'r').readlines()]
-    RDeg = [float(r) for r in open("egCostrd.txt", 'r').readlines()]
-    RDdyg = [float(r) for r in open("dygCostrd.txt", 'r').readlines()]
-    TVCCost = [float(r) for r in open("CostTVC.txt", 'r').readlines()]
-    TVCeg = [float(r) for r in open("dygCostTVC.txt", 'r').readlines()]
-    TVCdyg = [float(r) for r in open("egCostTVC.txt", 'r').readlines()]
-    GMCost = [float(r) for r in open("CostGM.txt", 'r').readlines()]
-    GMeg = [float(r) for r in open("egCostGM.txt", 'r').readlines()]
-    GMdyg = [float(r) for r in open("dygCostGM.txt", 'r').readlines()]
-    RPCost = [float(r) for r in open("CostRP.txt", 'r').readlines()]
-    RPeg = [float(r) for r in open("egCostRP.txt", 'r').readlines()]
-    RPdyg = [float(r) for r in open("dygCostRP.txt", 'r').readlines()]
-    ILP = [1.0 for i in range(5)]
-    labels = ("RW", "RD", "TVC", "GM", "RP")
-    x = np.arange(len(labels))
-    y1 = [sum(RWeg)/len(RWeg), sum(RDeg)/len(RDeg), sum(TVCeg)/len(TVCeg), sum(GMeg)/len(GMeg), sum(RPeg)/len(RPeg)]
-    e1 = [mean_confidence_interval(RWeg), mean_confidence_interval(RDeg), mean_confidence_interval(TVCeg),
-          mean_confidence_interval(GMeg), mean_confidence_interval(RPeg)]
-    y2 = [sum(RWdyg) / len(RWdyg), sum(RDdyg) / len(RDdyg), sum(TVCdyg) / len(TVCdyg), sum(GMdyg) / len(GMdyg),
-          sum(RPdyg) / len(RPdyg)]
-    e2 = [mean_confidence_interval(RWdyg), mean_confidence_interval(RDdyg), mean_confidence_interval(TVCdyg),
-          mean_confidence_interval(GMdyg), mean_confidence_interval(RPdyg)]
-    y3 = [sum(RWCost) / len(RWCost), sum(RDCost) / len(RDCost), sum(TVCCost) / len(TVCCost), sum(GMCost) / len(GMCost),
-          sum(RPCost) / len(RPCost)]
-    e3= [mean_confidence_interval(RWCost), mean_confidence_interval(RDCost), mean_confidence_interval(TVCCost),
-          mean_confidence_interval(GMCost), mean_confidence_interval(RPCost)]
-    # EstY = []
-    # CostY = [10.1781151891, 11.3251267552, 11.4250441456, 13.2298670268]
-    # width = 0.5
-    width = 0.3
-    # fig, ax = plt.subplots()
-    # formatter = FuncFormatter(millions)
-    # ax.yaxis.set_major_formatter(formatter)
-
-    plt.bar(x - width, y3, width, yerr=e1, capsize=7, label="BandEdge", zorder=3, hatch='//', color='#4DBEEE')
-    plt.bar(x, y2, width, yerr=e2, capsize=7, label="adaptive greedy", zorder=3, hatch='..', color='#A2142F')
-    plt.bar(x + width, y1, width, yerr=e3, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='++', color='#EDB120')
-
-    # plt.bar(x - width / 2, y1, width, yerr=e1, capsize=7, label="RW")
-    # plt.bar(x + width / 2, y2, width, yerr=e2, capsize=7, label="RD")
-    # plt.bar(x - 3 * width / 2, CMAB, width, label='CMAB')
-    # plt.bar(x - width / 2, Cloud, width, label='Cloud', hatch='-')
-    # plt.bar(x + width / 2, Edge, width, label='Edge', hatch='/')
-    # plt.bar(x + 3 * width / 2, heuristic, width, label='Heuristic')
-    plt.ylabel('Average response time (s)', fontsize=15)
-    plt.xlabel('Mobility models', fontsize=15)
-    plt.xticks(x, labels)
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("mobilitymodel2.eps", format='eps')
-    plt.savefig("mobilitymodel2.png", format='png')
-    plt.show()
-def delaybar():
-    AvgCost = [float(r) for r in open("avgrestime3.txt", 'r').readlines()]
-    Cost = []
-    for i, a in enumerate(AvgCost):
-        if i == 0:
-            Cost.append(a)
-        else:
-            Cost.append((i + 1) * AvgCost[i] - i * AvgCost[i - 1])
-    #x = [i for i in range(len(AvgCost))]
-    EstCost = [float(r) for r in open("estimatetime3.txt", 'r').readlines()]
-    AvgEst = [sum(EstCost[0:i + 1]) / len(EstCost[0:i + 1]) for i in range(len(EstCost))]
-
-    labels = ("20", "60", "100")
-    x = np.arange(len(labels))
-    # Y, E = readdata()
-    # y1 = [i for i in Y[0::2]]
-    # e1 = [i for i in E[0::2]]
-    # y2 = [i for i in Y[1::2]]
-    # e2 = [i for i in E[1::2]]
-    # y1 = []
-    # y1 = [14.2922887325, 13.0282305717, 10.7465812772]
-    # e1 = [3.34486096597, 1.40416287132, 1.4395536627]
-    # y2 = [11.2347782986, 11.2534561094, 10.4709706704]
-    # e2 = [2.3941068874, 1.06979879419, 1.02433588339]
-    y1 = [AvgCost[20], AvgCost[60], AvgCost[99]]
-    e1 = [mean_confidence_interval(Cost[0:20]), mean_confidence_interval(Cost[0:60]), mean_confidence_interval(Cost)]
-    y2 = [AvgEst[20], AvgEst[60], AvgEst[99]]
-    e2 = [mean_confidence_interval(EstCost[0:20]), mean_confidence_interval(EstCost[0:60]), mean_confidence_interval(EstCost)]
-
-    width = 0.4
-
-    # fig, ax = plt.subplots()
-    # formatter = FuncFormatter(millions)
-    # ax.yaxis.set_major_formatter(formatter)
-    plt.bar(x-width/2, y1, width, yerr=e1, capsize=7, label="Mininet Experiment")
-    plt.bar(x+width/2, y2, width, yerr=e2, capsize=7, label="Model Estimation")
-    # plt.bar(x - 3 * width / 2, CMAB, width, label='CMAB')
-    # plt.bar(x - width / 2, Cloud, width, label='Cloud', hatch='-')
-    # plt.bar(x + width / 2, Edge, width, label='Edge', hatch='/')
-    # plt.bar(x + 3 * width / 2, heuristic, width, label='Heuristic')
-    plt.ylabel('Average response time (s)')
-    plt.xlabel('Learning slot')
-    plt.xticks(x, labels)
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("responsevsestimationbar.eps", format='eps')
-    plt.savefig("responsevsestimationbar.png", format='png')
-    plt.show()
-def linkdelaybar():
-    d1Cost = [float(r) for r in open("Costtd1.txt", 'r').readlines()]
-    d1dyg = [float(r) for r in open("dygCosttd1.txt", 'r').readlines()]
-    d1eg = [float(r) for r in open("egCosttd1.txt", 'r').readlines()]
-    d2Cost = [float(r) for r in open("Costtd2.txt", 'r').readlines()]
-    d2dyg = [float(r) for r in open("dygCosttd2.txt", 'r').readlines()]
-    d2eg = [float(r) for r in open("egCosttd2.txt", 'r').readlines()]
-    d3Cost = [float(r) for r in open("Costtd3.txt", 'r').readlines()]
-    d3dyg = [float(r) for r in open("dygCosttd3.txt", 'r').readlines()]
-    d3eg = [float(r) for r in open("egCosttd3.txt", 'r').readlines()]
-
-    Y1 = [d1Cost, d2Cost, d3Cost]
-    Y2 = [d1dyg, d2dyg, d3dyg]
-    Y3 = [d1eg, d2eg, d3eg]
-    labels = ("50-100ms", "150-200ms", "250-300ms")
-    x = np.arange(len(labels))
-    y1 = [sum(y) / len(y) for y in Y1]
-    e1 = [mean_confidence_interval(y) for y in Y1]
-    y2 = [sum(y) / len(y) for y in Y2]
-    e2 = [mean_confidence_interval(y) for y in Y2]
-    y3 = [sum(y) / len(y) for y in Y3]
-    e3 = [mean_confidence_interval(y) for y in Y3]
-
-    width = 0.3
-    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label="BandEdge", zorder=3, hatch='//', color='#4DBEEE')
-    plt.bar(x, y2, width, yerr=e2, capsize=7, label="adaptive greedy", zorder=3, hatch='..', color='#A2142F')
-    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='++', color='#EDB120')
-    plt.ylabel('Average response time (s)')
-    plt.xlabel('Link delays')
-    plt.xticks(x, labels)
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("linkdelaybar_smallfont.eps", format='eps')
-    plt.savefig("linkdelaybar.png", format='png')
-    plt.show()
-def prodelaybar():
-    d1Cost = [float(r) for r in open("Costrd.txt", 'r').readlines()]
-    d1dyg = [float(r) for r in open("dygCostrd.txt", 'r').readlines()]
-    d1eg = [float(r) for r in open("egCostrd.txt", 'r').readlines()]
-    d2Cost = [float(r) for r in open("Costc1.txt", 'r').readlines()]
-    d2dyg = [float(r) for r in open("dygCostc1.txt", 'r').readlines()]
-    d2eg = [float(r) for r in open("egCostc1.txt", 'r').readlines()]
-    d3Cost = [float(r) for r in open("Costc2.txt", 'r').readlines()]
-    d3dyg = [float(r) for r in open("dygCostc2.txt", 'r').readlines()]
-    d3eg = [float(r) for r in open("egCostc2.txt", 'r').readlines()]
-
-    Y1 = [d1Cost, d2Cost, d3Cost]
-    Y2 = [d1dyg, d2dyg, d3dyg]
-    Y3 = [d1eg, d2eg, d3eg]
-
-    labels = ("10-50ms", "50-100ms", "100-150ms")
-    x = np.arange(len(labels))
-    y1 = [sum(y) / len(y) for y in Y1]
-    e1 = [mean_confidence_interval(y) for y in Y1]
-    y2 = [sum(y) / len(y) for y in Y2]
-    e2 = [mean_confidence_interval(y) for y in Y2]
-    y3 = [sum(y) / len(y) for y in Y3]
-    e3 = [mean_confidence_interval(y) for y in Y3]
-    width = 0.3
-    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label="BandEdge", zorder=3, hatch='//', color='#4DBEEE')
-    plt.bar(x, y2, width, yerr=e2, capsize=7, label="adaptive greedy", zorder=3, hatch='..', color='#A2142F')
-    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='++', color='#EDB120')
-    plt.ylabel('Average response time (s)')
-    plt.xlabel('Processing delays')
-    plt.xticks(x, labels)
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("prodelaybar_small font.eps", format='eps')
-    plt.savefig("prodelaybar.png", format='png')
-    plt.show()
-def switchdelaybar():
-    d1Cost = [float(r) for r in open("Costcd1.txt", 'r').readlines()]
-    d1dyg = [float(r) for r in open("dygCostcd1.txt", 'r').readlines()]
-    d1eg = [float(r) for r in open("egCostcd1.txt", 'r').readlines()]
-    d2Cost = [float(r) for r in open("Costcd2.txt", 'r').readlines()]
-    d2dyg = [float(r) for r in open("dygCostcd2.txt", 'r').readlines()]
-    d2eg = [float(r) for r in open("egCostcd2.txt", 'r').readlines()]
-    d3Cost = [float(r) for r in open("Costcd3.txt", 'r').readlines()]
-    d3dyg = [float(r) for r in open("dygCostcd3.txt", 'r').readlines()]
-    d3eg = [float(r) for r in open("egCostcd3.txt", 'r').readlines()]
-
-    Y1 = [d1Cost, d2Cost, d3Cost]
-    Y2 = [d1dyg, d2dyg, d3dyg]
-    Y3 = [d1eg, d2eg, d3eg]
-
-    labels = ("10-50ms", "50-100ms", "100-150ms")
-    x = np.arange(len(labels))
-    y1 = [sum(y) / len(y) for y in Y1]
-    e1 = [mean_confidence_interval(y) for y in Y1]
-    y2 = [sum(y) / len(y) for y in Y2]
-    e2 = [mean_confidence_interval(y) for y in Y2]
-    y3 = [sum(y) / len(y) for y in Y3]
-    e3 = [mean_confidence_interval(y) for y in Y3]
-    width = 0.3
-    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label="BandEdge", zorder=3, hatch='//', color='#4DBEEE')
-    plt.bar(x, y2, width, yerr=e2, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='..', color='#A2142F')
-    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="adaptive greedy", zorder=3, hatch='++', color='#EDB120')
-    plt.ylabel('Average response time (s)', fontsize=15)
-    plt.xlabel('Processing delays', fontsize=15)
-    plt.xticks(x, labels)
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.legend()
-    plt.grid(linestyle='--')
-    plt.savefig("switchdelaybar_smallfont.eps", format='eps')
-    plt.savefig("switchdelaybar.png", format='png')
-    plt.show()
-def numServicebarMininet():
-    s2cost = [float(r) for r in open("Costs2.txt", 'r').readlines()]
-    s2ag = [float(r) for r in open("dygCosts2.txt", 'r').readlines()]
-    s2eg = [float(r) for r in open("egCosts2.txt", 'r').readlines()]
-    s3cost = [float(r) for r in open("Costs3.txt", 'r').readlines()]
-    s3ag = [float(r) for r in open("dygCosts3.txt", 'r').readlines()]
-    s3eg = [float(r) for r in open("egCosts3.txt", 'r').readlines()]
-    s4cost = [float(r) for r in open("Costs4.txt", 'r').readlines()]
-    s4ag = [float(r) for r in open("dygCosts4.txt", 'r').readlines()]
-    s4eg = [float(r) for r in open("egCosts4.txt", 'r').readlines()]
-    Y1 = [s2cost, s3cost, s4cost]
-    Y2 = [s2eg, s3eg, s4eg]
-    Y3 = [s2ag, s3ag, s4ag]
-
-    y1 = [sum(y) / len(y) for y in Y1]
-    e1 = [mean_confidence_interval(y) for y in Y1]
-    y2 = [sum(y) / len(y) for y in Y2]
-    e2 = [mean_confidence_interval(y) for y in Y2]
-    y3 = [sum(y) / len(y) for y in Y3]
-    e3 = [mean_confidence_interval(y) for y in Y3]
-
-    labels = ["2", "3", "4"]
-    x = np.arange(len(labels))
-    width = 0.3
-    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label="BandEdge", zorder=3, hatch='//', color='#4DBEEE')
-    plt.bar(x, y3, width, yerr=e2, capsize=7, label="adaptive greedy", zorder=3, hatch='..', color='#A2142F')
-    plt.bar(x + width, y2, width, yerr=e3, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='++', color='#EDB120')
-    plt.ylabel('Average response time (s)')
-    plt.xlabel('Length of SFC')
-    plt.xticks(x, labels)
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("numservicebarmininet_smallfont.eps", format='eps')
-    plt.savefig("numservicebarmininet.png", format='png')
-    plt.show()
-def numServicebar():
-    s2cost = ast.literal_eval(open("cmabn17s2", 'r').readline())
-    s2eg = ast.literal_eval(open("egreedyn17s2", 'r').readline())
-    s2dyg = ast.literal_eval(open("agreedyn17s2", 'r').readline())
-    s3cost = ast.literal_eval(open("cmabn17s3", 'r').readline())
-    s3eg = ast.literal_eval(open("egreedyn17s3", 'r').readline())
-    s3dyg = ast.literal_eval(open("agreedyn17s3", 'r').readline())
-    s4cost = ast.literal_eval(open("cmabn17s4", 'r').readline())
-    s4eg = ast.literal_eval(open("egreedyn17s4", 'r').readline())
-    s4dyg = ast.literal_eval(open("agreedyn17s4", 'r').readline())
-    s5cost = ast.literal_eval(open("cmabn17s5", 'r').readline())
-    s5eg = ast.literal_eval(open("egreedyn17s5", 'r').readline())
-    s5dyg = ast.literal_eval(open("agreedyn17s5", 'r').readline())
-    Y1 = [s2cost, s3cost, s4cost, s5cost]
-    Y2 = [s2eg, s3eg, s4eg, s5eg]
-    Y3 = [s2dyg, s3dyg, s4dyg, s5dyg]
-
-    y1 = [sum(y) / len(y) for y in Y1]
-    y2 = [sum(y) / len(y) for y in Y2]
-    y3 = [sum(y) / len(y) for y in Y3]
-    y = y1 + y2 + y3
-    N = max(y) - min(y)
-    y1 = [y/N for y in y1]
-    y2 = [y/N for y in y2]
-    y3 = [y/N for y in y3]
-    e1 = [mean_confidence_interval(y)/N for y in Y1]
-    e2 = [mean_confidence_interval(y)/N for y in Y2]
-    e3 = [mean_confidence_interval(y)/N for y in Y3]
-
-    labels = ["2", "3", "4", "5"]
-    x = np.arange(len(labels))
-    width = 0.3
-    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label="BandEdge", zorder=3, hatch='//', color='#4DBEEE')
-    plt.bar(x, y2, width, yerr=e2, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='..', color='#A2142F')
-    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="adaptive greedy", zorder=3, hatch='++', color='#EDB120')
-    plt.ylabel('Time average cost', fontsize=15)
-    plt.xlabel('Number of services on SFC', fontsize=15)
-    plt.xticks(x, labels)
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.savefig("numservicebar.eps", format='eps')
-    plt.savefig("numservicebar.png", format='png')
-    plt.show()
-def numNodebar():
-    n5cost = ast.literal_eval(open("cmabn5s3", 'r').readline())
-    n5eg  = ast.literal_eval(open("egreedyn5s3", 'r').readline())
-    n5dyg = ast.literal_eval(open("agreedyn5s3", 'r').readline())
-    n10cost = ast.literal_eval(open("cmabn10s3", 'r').readline())
-    n10eg = ast.literal_eval(open("egreedyn10s3", 'r').readline())
-    n10dyg = ast.literal_eval(open("agreedyn10s3", 'r').readline())
-    n17cost = ast.literal_eval(open("cmabn17s3", 'r').readline())
-    n17eg = ast.literal_eval(open("egreedyn17s3", 'r').readline())
-    n17dyg = ast.literal_eval(open("agreedyn17s3", 'r').readline())
-    n26cost = ast.literal_eval(open("cmabn26s3", 'r').readline())
-    n26eg = ast.literal_eval(open("egreedyn26s3", 'r').readline())
-    n26dyg = ast.literal_eval(open("agreedyn26s3", 'r').readline())
-    Y1 = [n5cost, n10cost, n17cost, n26cost]
-    Y2 = [n5eg, n10eg, n17eg, n26eg]
-    Y3 = [n5dyg, n10dyg, n17dyg, n26dyg]
-
-    y1 = [sum(y) / len(y) for y in Y1]
-    e1 = [mean_confidence_interval(y) for y in Y1]
-    y2 = [sum(y) / len(y) for y in Y2]
-    e2 = [mean_confidence_interval(y) for y in Y2]
-    y3 = [sum(y) / len(y) for y in Y3]
-    e3 = [mean_confidence_interval(y) for y in Y3]
-    y = y1 + y2 + y3
-    N = max(y) - min(y) + 70
-    y1 = [y / N for y in y1]
-    y2 = [y / N for y in y2]
-    y3 = [y / N for y in y3]
-    e1 = [mean_confidence_interval(y) / N for y in Y1]
-    e2 = [mean_confidence_interval(y) / N for y in Y2]
-    e3 = [mean_confidence_interval(y) / N for y in Y3]
-
-    labels = ["2x2", "3x3", "4x4", "5x5"]
-    x = np.arange(len(labels))
-    width = 0.3
-    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label="BandEdge", zorder=3, hatch='//', color='#4DBEEE')
-    plt.bar(x, y2, width, yerr=e2, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='..', color='#A2142F')
-    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="adaptive greedy", zorder=3, hatch='++', color='#EDB120')
-    plt.ylabel('Time average cost', fontsize=15)
-    plt.xlabel('Size of the MEC network', fontsize=15)
-    plt.xticks(x, labels)
-    plt.grid(linestyle='--', zorder=0)
-    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
-    plt.grid(linestyle='--')
-    plt.savefig("numnodebar.eps", format='eps')
-    plt.savefig("numnodebar.png", format='png')
-    plt.show()
 def readdata():
     f = open("delayvscost.txt", "r")
     y = []
@@ -2147,21 +1647,648 @@ def calculateoffline(n):
     f.write(str(o))
     f.close()
     return o
+def plotLearningSlot(n, t, c, th):
+    CMAB = []
+    Cloud = []
+    Edge = []
+    Offline = []
+    heuristic = []
+    for i in range(100, 501, 100):
+        G = createNetwork(n, t, c)
+        cmab, cloud, edge, offline = main2(G, i, None)
+        CMAB.append(cmab)
+        Cloud.append(cloud)
+        Edge.append(edge)
+        Offline.append(offline)
+    open("cmabls", 'w').write(str(CMAB))
+    open("scls", 'w').write(str(Cloud))
+    open("sels", 'w').write(str(Edge))
+    # CMAB = ast.literal_eval(open("cmabls", 'r').readline())
+    # Cloud = ast.literal_eval(open("scls", 'r').readline())
+    # Edge = ast.literal_eval(open("sels", 'r').readline())
+    Y = CMAB + Cloud + Edge
+    N = (max(Y)+min(Y))/2.0
+    CMAB = [y/N for y in CMAB]
+    Cloud = [y/N for y in Cloud]
+    Edge = [y/N for y in Edge]
+    labels = [100, 200, 300, 400, 500]
+    x = np.arange(len(labels))
+    width = 0.3
+    plt.bar(x - 3 * width / 2, CMAB, width, label='BandEdge', hatch='//', color='#4DBEEE',zorder=3)
+    plt.bar(x - width / 2, Cloud, width, label='SC', hatch='..', color='#A2142F', zorder=3)
+    plt.bar(x + width / 2, Edge, width, label='SE', hatch='++', color='#EDB120', zorder=3)
+    plt.grid(linestyle='--', zorder=0)
+    plt.ylabel('Performance ratio')
+    plt.xlabel("Learning slots")
+    plt.xticks(x, labels)
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    plt.savefig("learningslot2.eps", format="eps")
+    plt.show()
+def switchdelaybar():
+    d1Cost = [float(r) for r in open("Costcd1.txt", 'r').readlines()]
+    d1dyg = [float(r) for r in open("dygCostcd1.txt", 'r').readlines()]
+    d1eg = [float(r) for r in open("egCostcd1.txt", 'r').readlines()]
+    d2Cost = [float(r) for r in open("Costcd2.txt", 'r').readlines()]
+    d2dyg = [float(r) for r in open("dygCostcd2.txt", 'r').readlines()]
+    d2eg = [float(r) for r in open("egCostcd2.txt", 'r').readlines()]
+    d3Cost = [float(r) for r in open("Costcd3.txt", 'r').readlines()]
+    d3dyg = [float(r) for r in open("dygCostcd3.txt", 'r').readlines()]
+    d3eg = [float(r) for r in open("egCostcd3.txt", 'r').readlines()]
+
+    Y1 = [d1Cost, d2Cost, d3Cost]
+    Y2 = [d1dyg, d2dyg, d3dyg]
+    Y3 = [d1eg, d2eg, d3eg]
+
+    labels = ("10-50ms", "50-100ms", "100-150ms")
+    x = np.arange(len(labels))
+    y1 = [sum(y) / len(y) for y in Y1]
+    e1 = [mean_confidence_interval(y) for y in Y1]
+    y2 = [sum(y) / len(y) for y in Y2]
+    e2 = [mean_confidence_interval(y) for y in Y2]
+    y3 = [sum(y) / len(y) for y in Y3]
+    e3 = [mean_confidence_interval(y) for y in Y3]
+    width = 0.3
+    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label="BandEdge", zorder=3, hatch='//', color='#4DBEEE')
+    plt.bar(x, y2, width, yerr=e2, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='..', color='#A2142F')
+    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="adaptive greedy", zorder=3, hatch='++', color='#EDB120')
+    plt.ylabel('Average response time (s)', fontsize=15)
+    plt.xlabel('Processing delays', fontsize=15)
+    plt.xticks(x, labels)
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend()
+    plt.grid(linestyle='--')
+    plt.savefig("switchdelaybar_smallfont.eps", format='eps')
+    plt.savefig("switchdelaybar.png", format='png')
+    plt.show()
+def delaybar(fs):
+    AvgCost = [float(r) for r in open("avgrestime3.txt", 'r').readlines()]
+    Cost = []
+    for i, a in enumerate(AvgCost):
+        if i == 0:
+            Cost.append(a)
+        else:
+            Cost.append((i + 1) * AvgCost[i] - i * AvgCost[i - 1])
+    #x = [i for i in range(len(AvgCost))]
+    EstCost = [float(r) for r in open("estimatetime3.txt", 'r').readlines()]
+    AvgEst = [sum(EstCost[0:i + 1]) / len(EstCost[0:i + 1]) for i in range(len(EstCost))]
+
+    labels = ("20", "60", "100")
+    x = np.arange(len(labels))
+    # Y, E = readdata()
+    # y1 = [i for i in Y[0::2]]
+    # e1 = [i for i in E[0::2]]
+    # y2 = [i for i in Y[1::2]]
+    # e2 = [i for i in E[1::2]]
+    # y1 = []
+    # y1 = [14.2922887325, 13.0282305717, 10.7465812772]
+    # e1 = [3.34486096597, 1.40416287132, 1.4395536627]
+    # y2 = [11.2347782986, 11.2534561094, 10.4709706704]
+    # e2 = [2.3941068874, 1.06979879419, 1.02433588339]
+    y1 = [AvgCost[20], AvgCost[60], AvgCost[99]]
+    e1 = [mean_confidence_interval(Cost[0:20]), mean_confidence_interval(Cost[0:60]), mean_confidence_interval(Cost)]
+    y2 = [AvgEst[20], AvgEst[60], AvgEst[99]]
+    e2 = [mean_confidence_interval(EstCost[0:20]), mean_confidence_interval(EstCost[0:60]), mean_confidence_interval(EstCost)]
+
+    width = 0.4
+
+    # fig, ax = plt.subplots()
+    # formatter = FuncFormatter(millions)
+    # ax.yaxis.set_major_formatter(formatter)
+    plt.bar(x-width/2, y1, width, yerr=e1, capsize=7, label="Mininet Experiment")
+    plt.bar(x+width/2, y2, width, yerr=e2, capsize=7, label="Model Estimation")
+    # plt.bar(x - 3 * width / 2, CMAB, width, label='CMAB')
+    # plt.bar(x - width / 2, Cloud, width, label='Cloud', hatch='-')
+    # plt.bar(x + width / 2, Edge, width, label='Edge', hatch='/')
+    # plt.bar(x + 3 * width / 2, heuristic, width, label='Heuristic')
+    plt.ylabel('Average response time (s)', fontsize=fs)
+    plt.xlabel('Learning slot', fontsize=fs)
+    plt.xticks(x, labels)
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    plt.savefig("responsevsestimationbar.eps", format='eps')
+    plt.savefig("responsevsestimationbar.png", format='png')
+    plt.show()
+
+# Simulation plots
+def replot2y(fs):
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel("Learning slots", fontsize=fs)
+    ax1.set_ylabel("Time average cost", fontsize=fs)
+    AvgRegret = ast.literal_eval(open("avgregretc0.300000i10000", 'r').readline())
+    Cost = ast.literal_eval(open("cmab1c0.300000i10000", 'r').readline())
+    Offline = ast.literal_eval(open('offline', 'r').readline())
+    x = [i for i in range(len(Cost))]
+    avgc = [sum(Cost[0:i + 1]) / len(Cost[0:i + 1]) for i in range(len(Cost))]
+    navgc = [a / (max(avgc) - Offline) for a in avgc]
+    avgo = [Offline / (max(avgc) - Offline) for i in x]
+    l1, = ax1.plot(x[0:4000], navgc[0:4000], '--', label=algorithmName, zorder=3)
+    l2, = ax1.plot(x[0:4000], avgo[0:4000], label='Offline optimum', zorder=3)
+    # plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    ax2 = ax1.twinx()
+    ax2.set_ylabel("regret")
+    l3, = ax2.plot(x[0:4000], AvgRegret[0:4000], ':', label="regret", zorder=3)
+    fig.tight_layout()
+    ax1.grid(linestyle='--', zorder=0)
+    # ax2.grid(linestyle='--', zorder=0)
+    ax1.set_ylim(bottom=0)
+    ax2.set_ylim(bottom=0)
+    # plt.ylim(bottom=0)
+    plt.legend([l1, l2, l3], [algorithmName, "Offline optimum", "Regret"], loc='right')
+    # plt.savefig("../icfec21/figs/replotlearningnormalized1.eps", format="eps")
+    plt.savefig("../icfec21/figs/replotlearningnormalized1.eps", format="eps")
+    plt.savefig("replotlearningnormalized1.png", format="png")
+    plt.show()
+def plotTransWeight(fs):
+    CMAB = []
+    Cloud = []
+    Edge = []
+    # Offline = []
+    # heuristic = []
+    # for i in range(5):
+    #     G = createNetwork(5, i, 3)
+    #     cmab, cloud, edge, offline = main2(G, n, None)
+    #     CMAB.append(cmab)
+    #     Cloud.append(cloud)
+    #     Edge.append(edge)
+    #     Offline.append(offline)
+    # open("cmabtw", 'w').write(str(CMAB))
+    # open("sctw", 'w').write(str(Cloud))
+    # open("setw", 'w').write(str(Edge))
+    CMAB = ast.literal_eval(open("cmabtw", 'r').readline())
+    Cloud = ast.literal_eval(open("sctw", 'r').readline())
+    Edge = ast.literal_eval(open("setw", 'r').readline())
+    Y = CMAB + Cloud + Edge
+    N = (max(Y)+min(Y))/2.0
+    CMAB = [y / N for y in CMAB]
+    Cloud = [y / N for y in Cloud]
+    Edge = [y / N for y in Edge]
+    ILP = [1.0 for i in range(5)]
+    labels = [1,2,3,4,5]
+    x = np.arange(len(labels))
+    width = 0.3
+    plt.bar(x - 3 * width / 2, CMAB, width, label=algorithmName, hatch='//', color='#4DBEEE', zorder=3)
+    plt.bar(x - width / 2, Cloud, width, label='SC', hatch='..', color='#A2142F', zorder=3)
+    plt.bar(x + width / 2, Edge, width, label='SE', hatch='++', color='#EDB120', zorder=3)
+    plt.grid(linestyle='--', zorder=0)
+    plt.ylabel('Performance ratio', fontsize=fs)
+    plt.xlabel('Propagation delay levels on edge', fontsize=fs)
+    plt.xticks(x, labels)
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    #plt.savefig("../paper/figs/transmissionLevel2.eps", format='eps')
+    plt.savefig("../icfec21/figs/transmissionLevel2.eps", format='eps')
+    plt.show()
+def plotComputingWeight(fs):
+    CMAB = []
+    Cloud = []
+    Edge = []
+    # Offline = []
+    # heuristic = []
+    # for i in range(5):
+    #     G = createNetwork(5, 3, i)
+    #     cmab, cloud, edge, offline = main2(G, n, None)
+    #     CMAB.append(cmab)
+    #     Cloud.append(cloud)
+    #     Edge.append(edge)
+    #     Offline.append(offline)
+    # open("cmabcw", 'w').write(str(CMAB))
+    # open("sccw", 'w').write(str(Cloud))
+    # open("secw", 'w').write(str(Edge))
+    CMAB = ast.literal_eval(open("cmabcw", 'r').readline())
+    Cloud = ast.literal_eval(open("sccw", 'r').readline())
+    Edge = ast.literal_eval(open("secw", 'r').readline())
+    # CMAB = [Cost1[i] / Cost2[i] for i in range(5)]
+    # Cloud = [Cost3[i] / Cost2[i] for i in range(5)]
+    # Edge = [Cost4[i] / Cost2[i] for i in range(5)]
+    # ILP = [1.0 for i in range(5)]
+    Y = CMAB + Cloud + Edge
+    N = (max(Y)+min(Y))/2.0
+    CMAB = [y / N for y in CMAB]
+    Cloud = [y / N for y in Cloud]
+    Edge = [y / N for y in Edge]
+    labels = [1, 2, 3, 4, 5]
+    x = np.arange(len(labels))
+    width = 0.3
+    plt.bar(x - 3 * width / 2, CMAB, width, label=algorithmName, hatch='//', color='#4DBEEE', zorder=3)
+    plt.bar(x - width / 2, Cloud, width, label='SC', hatch='..', color='#A2142F', zorder=3)
+    plt.bar(x + width / 2, Edge, width, label='SE', hatch='++', color='#EDB120', zorder=3)
+    plt.grid(linestyle='--', zorder=0)
+    plt.ylabel('Performance ratio', fontsize=fs)
+    plt.xlabel('Computing delay levels on edge', fontsize=fs)
+    plt.xticks(x, labels)
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    #plt.savefig("../paper/figs/computationLevel2.eps", format='eps')
+    plt.savefig("../icfec21/figs/computationLevel2.eps", format="eps")
+    plt.show()
+    #plt.close()
+def plotSwitchCost(fs):
+    CMAB = []
+    Cloud = []
+    Edge = []
+    Offline = []
+    heuristic = []
+    # for sw in labels:
+    #     global switch_weight
+    #     switch_weight = sw
+    #     G = createNetwork(5, 3, 3)
+    #     cmab, cloud, edge, offline = main2(G, i, 80)
+    #     CMAB.append(cmab)
+    #     Cloud.append(cloud)
+    #     Edge.append(edge)
+    #     Offline.append(offline)
+    # open("cmabsw", 'w').write(str(CMAB))
+    # open("scsw", 'w').write(str(Cloud))
+    # open("sesw", 'w').write(str(Edge))
+    CMAB = ast.literal_eval(open("cmabsw", 'r').readline())
+    Cloud = ast.literal_eval(open("scsw", 'r').readline())
+    Edge = ast.literal_eval(open("sesw", 'r').readline())
+    Y = CMAB + Cloud + Edge
+    N = (max(Y)+min(Y))/2.0
+    CMAB = [y / N for y in CMAB]
+    Cloud = [y / N for y in Cloud]
+    Edge = [y / N for y in Edge]
+    labels = [1.0, 2.0, 3.0, 4.0, 5.0]
+    # CMAB = [Cost1[i] / Cost2[i] for i in range(5)]
+    # Cloud = [Cost3[i] / Cost2[i] for i in range(5)]
+    # Edge = [Cost4[i] / Cost2[i] for i in range(5)]
+    # CMAB = Cost1
+    # Cloud = Cost2
+    # Edge = Cost4
+    # ILP = [1.0 for i in range(5)]
+    x = np.arange(len(labels))
+    width = 0.3
+    plt.bar(x - 3 * width / 2, CMAB, width, label=algorithmName, hatch='//', color='#4DBEEE', zorder=3)
+    plt.bar(x - width / 2, Cloud, width, label='SC', hatch='..', color='#A2142F', zorder=3)
+    plt.bar(x + width / 2, Edge, width, label='SE', hatch='++', color='#EDB120', zorder=3)
+    #plt.bar(x + 3 * width / 2, heuristic, width, label='Heuristic', hatch='+')
+    #plt.ylabel('Performance ratio',fontsize=15) #,fontsize=15
+    plt.ylabel('Performance ratio', fontsize=fs)
+    #plt.xlabel("The weight of switching cost",fontsize=15)
+    plt.xlabel("The weight of migration delay", fontsize=fs)
+    plt.xticks(x, labels)
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    #plt.savefig("../paper/figs/switchingcost2.eps", format="eps")
+    plt.savefig("../icfec21/figs/switchingcost2.eps", format="eps")
+    plt.show()
+def plotServiceNumRuntime(i, s, n):
+
+    Run1 = []
+    Run2 = []
+    for sn in range(3, s+1):
+        G = createNetwork(5, transLevel=0, compLevel=0)
+        global service_num
+        service_num = sn
+        #run1, run2, __, __ = main1(G, i, 5)
+        run1 = mainLearning(G, i)
+        Run1.append(run1)
+
+    for sn in range(3, s+1):
+        G = createNetwork(sn, transLevel=0, compLevel=0)
+        service_num = 3
+        run2 = mainLearning(G, i)
+        Run2.append(run2)
+    x = [i for i in range(3, s+1)]
+    plt.plot(x, Run1, label='service', marker='o')
+    plt.plot(x, Run2, label='node size', marker='v')
+    plt.xlabel("# of services/node size")
+    plt.xticks(x, x)
+    plt.ylabel("Runtime (ms)")
+    plt.ylim(bottom=0)
+    plt.legend()
+    plt.savefig("runtime2.eps", format="eps")
+    plt.show()
+def numNodebar(fs):
+    n5cost = ast.literal_eval(open("cmabn5s3", 'r').readline())
+    n5eg  = ast.literal_eval(open("egreedyn5s3", 'r').readline())
+    n5dyg = ast.literal_eval(open("agreedyn5s3", 'r').readline())
+    n10cost = ast.literal_eval(open("cmabn10s3", 'r').readline())
+    n10eg = ast.literal_eval(open("egreedyn10s3", 'r').readline())
+    n10dyg = ast.literal_eval(open("agreedyn10s3", 'r').readline())
+    n17cost = ast.literal_eval(open("cmabn17s3", 'r').readline())
+    n17eg = ast.literal_eval(open("egreedyn17s3", 'r').readline())
+    n17dyg = ast.literal_eval(open("agreedyn17s3", 'r').readline())
+    n26cost = ast.literal_eval(open("cmabn26s3", 'r').readline())
+    n26eg = ast.literal_eval(open("egreedyn26s3", 'r').readline())
+    n26dyg = ast.literal_eval(open("agreedyn26s3", 'r').readline())
+    Y1 = [n5cost, n10cost, n17cost, n26cost]
+    Y2 = [n5eg, n10eg, n17eg, n26eg]
+    Y3 = [n5dyg, n10dyg, n17dyg, n26dyg]
+
+    y1 = [sum(y) / len(y) for y in Y1]
+    e1 = [mean_confidence_interval(y) for y in Y1]
+    y2 = [sum(y) / len(y) for y in Y2]
+    e2 = [mean_confidence_interval(y) for y in Y2]
+    y3 = [sum(y) / len(y) for y in Y3]
+    e3 = [mean_confidence_interval(y) for y in Y3]
+    y = y1 + y2 + y3
+    N = max(y) - min(y) + 70
+    y1 = [y / N for y in y1]
+    y2 = [y / N for y in y2]
+    y3 = [y / N for y in y3]
+    e1 = [mean_confidence_interval(y) / N for y in Y1]
+    e2 = [mean_confidence_interval(y) / N for y in Y2]
+    e3 = [mean_confidence_interval(y) / N for y in Y3]
+
+    labels = ["2x2", "3x3", "4x4", "5x5"]
+    x = np.arange(len(labels))
+    width = 0.3
+    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label=algorithmName, zorder=3, hatch='//', color='#4DBEEE')
+    plt.bar(x, y2, width, yerr=e2, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='..', color='#A2142F')
+    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="adaptive greedy", zorder=3, hatch='++', color='#EDB120')
+    plt.ylabel('Performance ratio', fontsize=fs)
+    plt.xlabel('Size of the MEC network', fontsize=fs)
+    plt.xticks(x, labels)
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    plt.grid(linestyle='--')
+    plt.savefig("../icfec21/figs/numnodebar.eps", format='eps')
+    plt.savefig("numnodebar.png", format='png')
+    plt.show()
+def numServicebar(fs):
+    s2cost = ast.literal_eval(open("cmabn17s2", 'r').readline())
+    s2eg = ast.literal_eval(open("egreedyn17s2", 'r').readline())
+    s2dyg = ast.literal_eval(open("agreedyn17s2", 'r').readline())
+    s3cost = ast.literal_eval(open("cmabn17s3", 'r').readline())
+    s3eg = ast.literal_eval(open("egreedyn17s3", 'r').readline())
+    s3dyg = ast.literal_eval(open("agreedyn17s3", 'r').readline())
+    s4cost = ast.literal_eval(open("cmabn17s4", 'r').readline())
+    s4eg = ast.literal_eval(open("egreedyn17s4", 'r').readline())
+    s4dyg = ast.literal_eval(open("agreedyn17s4", 'r').readline())
+    s5cost = ast.literal_eval(open("cmabn17s5", 'r').readline())
+    s5eg = ast.literal_eval(open("egreedyn17s5", 'r').readline())
+    s5dyg = ast.literal_eval(open("agreedyn17s5", 'r').readline())
+    Y1 = [s2cost, s3cost, s4cost, s5cost]
+    Y2 = [s2eg, s3eg, s4eg, s5eg]
+    Y3 = [s2dyg, s3dyg, s4dyg, s5dyg]
+
+    y1 = [sum(y) / len(y) for y in Y1]
+    y2 = [sum(y) / len(y) for y in Y2]
+    y3 = [sum(y) / len(y) for y in Y3]
+    y = y1 + y2 + y3
+    N = max(y) - min(y)
+    y1 = [y/N for y in y1]
+    y2 = [y/N for y in y2]
+    y3 = [y/N for y in y3]
+    e1 = [mean_confidence_interval(y)/N for y in Y1]
+    e2 = [mean_confidence_interval(y)/N for y in Y2]
+    e3 = [mean_confidence_interval(y)/N for y in Y3]
+
+    labels = ["2", "3", "4", "5"]
+    x = np.arange(len(labels))
+    width = 0.3
+    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label=algorithmName, zorder=3, hatch='//', color='#4DBEEE')
+    plt.bar(x, y2, width, yerr=e2, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='..', color='#A2142F')
+    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="adaptive greedy", zorder=3, hatch='++', color='#EDB120')
+    plt.ylabel('Performance ratio', fontsize=fs)
+    plt.xlabel('Number of services on SFC', fontsize=fs)
+    plt.xticks(x, labels)
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    plt.savefig("../icfec21/figs/numservicebar.eps", format='eps')
+    plt.savefig("numservicebar.png", format='png')
+    plt.show()
+
+# Emulation plots
+def replotMiniWifiLearning(fs):
+    # Cost1 = [float(r) for r in open("gCostg.txt", 'r').readlines()]
+    # Cost2 = [float(r) for r in open("Cost1000.txt", 'r').readlines()]
+    #gCost = [float(r) for r in open("gCost1000.txt", 'r').readlines()]
+    Cost = [float(r) for r in open("Costg3 - Copy.txt", 'r').readlines()]
+    #Cost5 = [float(r) for r in open("tCost1000.txt", 'r').readlines()]
+    gCost =  [float(r) for r in open("gCostg.txt", 'r').readlines()]
+    # gCost2 = [float(r) for r in open("gCost1000.txt", 'r').readlines()]
+    # gCost3 = [float(r) for r in open("gCost1000.txt", 'r').readlines()]
+    # gCost4 = [float(r) for r in open("tCost1000.txt", 'r').readlines()]
+
+
+
+
+
+    # gCost = [gCost1, gCost2, gCost3, gCost4]
+
+
+    #Marker = ["o", "v", "^", "<", ">", "+", "x", "|", "_"]
+    Marker = ["o", "^"]
+    Y1 = []
+    Y2 = []
+    X = [1, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    AvgCost = []
+    AvggCost = []
+    for n in X:
+        AvgCost.append(avgList(Cost)[n-1])
+        AvggCost.append(avgList(gCost)[n-1])
+    # for c in gCost:
+    #     AvggCost = []
+    #     for n in X:
+    #         AvggCost.append(avgList(c)[n-1])
+    #     Y2.append(AvggCost)
+
+
+    plt.plot(X, AvgCost, label=algorithmName, marker="o", zorder=3)
+    plt.plot(X, AvggCost, label="$\epsilon$-greedy", marker="^", zorder=3)
+    plt.plot(X, [float(open("offline100_1.txt").read()) for i in range(len(X))], label="offline optimum", zorder=3)
+    plt.xlabel("Learning slots", fontsize=fs)
+    plt.ylabel("Average response time (s)", fontsize=fs)
+    plt.ylim(bottom=0)
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend()
+    plt.savefig("../icfec21/figs/MiniwifiLearning1.eps", format="eps")
+    plt.savefig("MiniwifiLearning1.png", format="png")
+    plt.show()
+def mobilitybar(fs):
+    RWCost = [float(r) for r in open("Costrw.txt", 'r').readlines()]
+    RWeg = [float(r) for r in open("egCostrw.txt", 'r').readlines()]
+    RWdyg = [float(r) for r in open("dygCostrw.txt", 'r').readlines()]
+    RDCost = [float(r) for r in open("Costrd.txt", 'r').readlines()]
+    RDeg = [float(r) for r in open("egCostrd.txt", 'r').readlines()]
+    RDdyg = [float(r) for r in open("dygCostrd.txt", 'r').readlines()]
+    TVCdyg = [float(r) for r in open("CostTVC.txt", 'r').readlines()]
+    TVCCost = [float(r) for r in open("dygCostTVC.txt", 'r').readlines()]
+    TVCeg = [float(r) for r in open("egCostTVC.txt", 'r').readlines()]
+    GMCost = [float(r) for r in open("CostGM.txt", 'r').readlines()]
+    GMdyg = [float(r) for r in open("egCostGM.txt", 'r').readlines()]
+    GMeg = [float(r) for r in open("dygCostGM.txt", 'r').readlines()]
+    RPCost = [float(r) for r in open("CostRP.txt", 'r').readlines()]
+    RPeg = [float(r) for r in open("egCostRP.txt", 'r').readlines()]
+    RPdyg = [float(r) for r in open("dygCostRP.txt", 'r').readlines()]
+    ILP = [1.0 for i in range(5)]
+    labels = ("RW", "RD", "TVC", "GM", "RP")
+    x = np.arange(len(labels))
+    y1 = [sum(RWeg)/len(RWeg), sum(RDeg)/len(RDeg), sum(TVCeg)/len(TVCeg), sum(GMeg)/len(GMeg), sum(RPeg)/len(RPeg)]
+    e1 = [mean_confidence_interval(RWeg), mean_confidence_interval(RDeg), mean_confidence_interval(TVCeg),
+          mean_confidence_interval(GMeg), mean_confidence_interval(RPeg)]
+    y2 = [sum(RWdyg) / len(RWdyg), sum(RDdyg) / len(RDdyg), sum(TVCdyg) / len(TVCdyg), sum(GMdyg) / len(GMdyg),
+          sum(RPdyg) / len(RPdyg)]
+    e2 = [mean_confidence_interval(RWdyg), mean_confidence_interval(RDdyg), mean_confidence_interval(TVCdyg),
+          mean_confidence_interval(GMdyg), mean_confidence_interval(RPdyg)]
+    y3 = [sum(RWCost) / len(RWCost), sum(RDCost) / len(RDCost), sum(TVCCost) / len(TVCCost), sum(GMCost) / len(GMCost),
+          sum(RPCost) / len(RPCost)]
+    e3= [mean_confidence_interval(RWCost), mean_confidence_interval(RDCost), mean_confidence_interval(TVCCost),
+          mean_confidence_interval(GMCost), mean_confidence_interval(RPCost)]
+    # EstY = []
+    # CostY = [10.1781151891, 11.3251267552, 11.4250441456, 13.2298670268]
+    # width = 0.5
+    width = 0.3
+    # fig, ax = plt.subplots()
+    # formatter = FuncFormatter(millions)
+    # ax.yaxis.set_major_formatter(formatter)
+
+    plt.bar(x - width, y3, width, yerr=e1, capsize=7, label=algorithmName, zorder=3, hatch='//', color='#4DBEEE')
+    plt.bar(x, y2, width, yerr=e2, capsize=7, label="adaptive greedy", zorder=3, hatch='..', color='#A2142F')
+    plt.bar(x + width, y1, width, yerr=e3, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='++', color='#EDB120')
+
+    # plt.bar(x - width / 2, y1, width, yerr=e1, capsize=7, label="RW")
+    # plt.bar(x + width / 2, y2, width, yerr=e2, capsize=7, label="RD")
+    # plt.bar(x - 3 * width / 2, CMAB, width, label='CMAB')
+    # plt.bar(x - width / 2, Cloud, width, label='Cloud', hatch='-')
+    # plt.bar(x + width / 2, Edge, width, label='Edge', hatch='/')
+    # plt.bar(x + 3 * width / 2, heuristic, width, label='Heuristic')
+    plt.ylabel('Average response time (s)', fontsize=fs)
+    plt.xlabel('Mobility models', fontsize=fs)
+    plt.xticks(x, labels)
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    plt.savefig("../icfec21/figs/mobilitymodel2.eps", format='eps')
+    plt.savefig("mobilitymodel2.png", format='png')
+    plt.show()
+def linkdelaybar(fs):
+
+    d1Cost = [float(r) for r in open("Costtd1.txt", 'r').readlines()]
+    d1eg = [float(r) for r in open("dygCosttd1.txt", 'r').readlines()]
+    d1dyg = [float(r) for r in open("egCosttd1.txt", 'r').readlines()]
+    d2Cost = [float(r) for r in open("Costtd2.txt", 'r').readlines()]
+    d2eg = [float(r) for r in open("dygCosttd2.txt", 'r').readlines()]
+    d2dyg = [float(r) for r in open("egCosttd2.txt", 'r').readlines()]
+    d3Cost = [float(r) for r in open("Costtd3.txt", 'r').readlines()]
+    d3dyg = [float(r) for r in open("dygCosttd3.txt", 'r').readlines()]
+    d3eg = [float(r) for r in open("egCosttd3.txt", 'r').readlines()]
+
+    Y1 = [d1Cost, d2Cost, d3Cost]
+    Y2 = [d1dyg, d2dyg, d3dyg]
+    Y3 = [d1eg, d2eg, d3eg]
+    labels = ("50-100ms", "150-200ms", "250-300ms")
+    x = np.arange(len(labels))
+    y1 = [sum(y) / len(y) for y in Y1]
+    e1 = [mean_confidence_interval(y) for y in Y1]
+    y2 = [sum(y) / len(y) for y in Y2]
+    e2 = [mean_confidence_interval(y) for y in Y2]
+    y3 = [sum(y) / len(y) for y in Y3]
+    e3 = [mean_confidence_interval(y) for y in Y3]
+
+    width = 0.3
+    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label=algorithmName, zorder=3, hatch='//', color='#4DBEEE')
+    plt.bar(x, y2, width, yerr=e2, capsize=7, label="adaptive greedy", zorder=3, hatch='..', color='#A2142F')
+    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='++', color='#EDB120')
+    plt.ylabel('Average response time (s)', fontsize=fs)
+    plt.xlabel('Link delays', fontsize=fs)
+    plt.xticks(x, labels)
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    plt.savefig("../icfec21/figs/linkdelaybar.eps", format='eps')
+    plt.savefig("linkdelaybar.png", format='png')
+    plt.show()
+def prodelaybar(fs):
+    d1Cost = [float(r) for r in open("Costrd.txt", 'r').readlines()]
+    d1dyg = [float(r) for r in open("dygCostrd.txt", 'r').readlines()]
+    d1eg = [float(r) for r in open("egCostrd.txt", 'r').readlines()]
+    d2Cost = [float(r) for r in open("Costc1.txt", 'r').readlines()]
+    d2dyg = [float(r) for r in open("dygCostc1.txt", 'r').readlines()]
+    d2eg = [float(r) for r in open("egCostc1.txt", 'r').readlines()]
+    d3Cost = [float(r) for r in open("Costc2.txt", 'r').readlines()]
+    d3dyg = [float(r) for r in open("dygCostc2.txt", 'r').readlines()]
+    d3eg = [float(r) for r in open("egCostc2.txt", 'r').readlines()]
+
+    Y1 = [d1Cost, d2Cost, d3Cost]
+    Y2 = [d1dyg, d2dyg, d3dyg]
+    Y3 = [d1eg, d2eg, d3eg]
+
+    labels = ("10-50ms", "50-100ms", "100-150ms")
+    x = np.arange(len(labels))
+    y1 = [sum(y) / len(y) for y in Y1]
+    e1 = [mean_confidence_interval(y) for y in Y1]
+    y2 = [sum(y) / len(y) for y in Y2]
+    e2 = [mean_confidence_interval(y) for y in Y2]
+    y3 = [sum(y) / len(y) for y in Y3]
+    e3 = [mean_confidence_interval(y) for y in Y3]
+    width = 0.3
+    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label=algorithmName, zorder=3, hatch='//', color='#4DBEEE')
+    plt.bar(x, y2, width, yerr=e2, capsize=7, label="adaptive greedy", zorder=3, hatch='..', color='#A2142F')
+    plt.bar(x + width, y3, width, yerr=e3, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='++', color='#EDB120')
+    plt.ylabel('Average response time (s)', fontsize=fs)
+    plt.xlabel('Processing delays', fontsize=fs)
+    plt.xticks(x, labels)
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    plt.savefig("../icfec21/figs/prodelaybar.eps", format='eps')
+    plt.savefig("prodelaybar.png", format='png')
+    plt.show()
+def numServicebarMininet(fs):
+    s2cost = [float(r) for r in open("Costs2.txt", 'r').readlines()]
+    s2ag = [float(r) for r in open("dygCosts2.txt", 'r').readlines()]
+    s2eg = [float(r) for r in open("egCosts2.txt", 'r').readlines()]
+    s3cost = [float(r) for r in open("Costs3.txt", 'r').readlines()]
+    s3ag = [float(r) for r in open("dygCosts3.txt", 'r').readlines()]
+    s3eg = [float(r) for r in open("egCosts3.txt", 'r').readlines()]
+    s4cost = [float(r) for r in open("Costs4.txt", 'r').readlines()]
+    s4ag = [float(r) for r in open("dygCosts4.txt", 'r').readlines()]
+    s4eg = [float(r) for r in open("egCosts4.txt", 'r').readlines()]
+    Y1 = [s2cost, s3cost, s4cost]
+    Y2 = [s2eg, s3eg, s4eg]
+    Y3 = [s2ag, s3ag, s4ag]
+
+    y1 = [sum(y) / len(y) for y in Y1]
+    e1 = [mean_confidence_interval(y) for y in Y1]
+    y2 = [sum(y) / len(y) for y in Y2]
+    e2 = [mean_confidence_interval(y) for y in Y2]
+    y3 = [sum(y) / len(y) for y in Y3]
+    e3 = [mean_confidence_interval(y) for y in Y3]
+
+    labels = ["2", "3", "4"]
+    x = np.arange(len(labels))
+    width = 0.3
+    plt.bar(x - width, y1, width, yerr=e1, capsize=7, label=algorithmName, zorder=3, hatch='//', color='#4DBEEE')
+    plt.bar(x, y3, width, yerr=e2, capsize=7, label="adaptive greedy", zorder=3, hatch='..', color='#A2142F')
+    plt.bar(x + width, y2, width, yerr=e3, capsize=7, label="$\epsilon$-greedy", zorder=3, hatch='++', color='#EDB120')
+    plt.ylabel('Average response time (s)', fontsize=fs)
+    plt.xlabel('Length of SFC', fontsize=fs)
+    plt.xticks(x, labels)
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(linestyle='--', zorder=0)
+    plt.legend(bbox_to_anchor=(0.5, 1), loc='lower center', ncol=3)
+    plt.savefig("../icfec21/figs/numservicebarmininet.eps", format='eps')
+    plt.savefig("numservicebarmininet.png", format='png')
+    plt.show()
+
+
+
 
 if __name__ == '__main__':
-    #replot2y()
-    # numServicebarMininet()
-    # linkdelaybar()
-    # prodelaybar()
-    # mobilitybar()
-    #switchdelaybar()
-    #replotRuntime()
-    # #numNodebar()
-    # #numServicebar()
-    # # plotComputingWeight(None)
-    plotSwitchCost(None)
-    #plotTransWeight(None)
-    # #replotMiniWifiLearning()
+    #drawNetworkTopology(5)
+    #simulation
+    replot2y(10)
+    plotComputingWeight(10)
+    plotSwitchCost(10)
+    plotTransWeight(10)
+    replotRuntime(10)
+    numNodebar(10)
+    numServicebar(10)
+
+    #emulation
+    replotMiniWifiLearning(10)
+    linkdelaybar(10)
+    prodelaybar(10)
+    mobilitybar(10)
+    numServicebarMininet(10)
+
+
+
+
     # #replotRuntime()
     # #replot()
     # #numNodebar()
